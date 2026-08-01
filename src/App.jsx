@@ -12,7 +12,7 @@ const ticker = [
   "UNIT 4 DISPATCHED — Mirpur-10, structure fire",
   "UNIT 2 RETURNED — Gulshan, false alarm cleared",
   "UNIT 7 EN ROUTE — Dhanmondi 27, gas leak reported",
-  "UNIT 1 ON SCENE — Motijheel, response time 6 min",
+  "UNIT 1 ON SCENE — Motijheel, response time 10 min",
 ];
 
 const stats = [
