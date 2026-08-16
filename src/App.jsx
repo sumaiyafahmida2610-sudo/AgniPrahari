@@ -1,4 +1,10 @@
 import { useState, useEffect } from "react";
+import CitizenRegister from "./CitizenRegister.jsx";
+import Login from "./Login.jsx";
+import Profile from "./Profile.jsx";
+import TrainingRequest from "./TrainingRequest.jsx";
+import TraineeProfile from "./TraineeProfile.jsx";
+import GeneralComplaint from "./GeneralComplaint.jsx";
 
 // ---- FAKE DATA (swap with your Oracle DB API calls later) ----
 const stations = [
@@ -30,7 +36,11 @@ const statusColor = {
 
 export default function App() {
   const [tickerIndex, setTickerIndex] = useState(0);
+  const [view, setView] = useState("home");
   const [showReportModal, setShowReportModal] = useState(false);
+  const [loginIntent, setLoginIntent] = useState(null); // null | "complain"
+const [showComplainTooltip, setShowComplainTooltip] = useState(false);
+const [showComplainMenu, setShowComplainMenu] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -39,8 +49,67 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
+ if (view === "citizenRegister") {
+  return <CitizenRegister onBackHome={() => setView("home")} />;
+}
+if (view === "login") {
   return (
-    <div style={styles.page}>
+    <Login
+      onBackHome={() => setView("home")}
+      onLoginSuccess={(userType) =>
+        setView(userType === "citizen" ? "profile" : "traineeProfile")
+      }
+    />
+  );
+}
+if (view === "profile") {
+  return (
+    <Profile
+      onBackHome={() => setView("home")}
+      onLogout={() => setView("home")}
+      initialSection={loginIntent === "complain" ? "complain" : "profile"}
+    />
+  );
+}
+
+if (view === "training") {
+  return <TrainingRequest onBackHome={() => setView("home")} />;
+}
+
+if (view === "traineeProfile") {
+  return (
+    <TraineeProfile
+      onBackHome={() => setView("home")}
+      onLogout={() => setView("home")}
+      initialSection={loginIntent === "complain" ? "complain" : "profile"}
+    />
+  );
+}
+
+
+if (view === "complainTraining") {
+  return (
+    <GeneralComplaint
+      title="Complain for Fire Safety Training"
+      idLabel="Training ID"
+      complaintType="Fire Safety Training"
+      onBackHome={() => setView("home")}
+    />
+  );
+}
+if (view === "complainInspection") {
+  return (
+    <GeneralComplaint
+      title="Complain for Fire Safety Inspection"
+      idLabel="Inspection ID"
+      complaintType="Fire Safety Inspection"
+      onBackHome={() => setView("home")}
+    />
+  );
+}
+
+return (
+  <div style={styles.page}>
       <style>{globalCss}</style>
 
       {/* NAV */}
@@ -49,11 +118,82 @@ export default function App() {
           AGNI<span style={{ color: "#E63927" }}>PRAHARI</span>
         </div>
         <nav style={styles.navLinks}>
-          <a href="#stations" style={styles.navLink}>Stations</a>
-          <a href="#stats" style={styles.navLink}>Live Stats</a>
-          <a href="#safety" style={styles.navLink}>Safety</a>
-          <a href="#" style={styles.navLink}>Staff Login</a>
-        </nav>
+  <a href="#stations" style={styles.navLink}>Stations</a>
+  <a href="#stats" style={styles.navLink}>Live Stats</a>
+  <a href="#safety" style={styles.navLink}>Safety</a>
+  <a href="#" style={styles.navLink}>Staff Login</a>
+  
+    <a href="#"
+    style={styles.navLink}
+    onClick={(e) => { e.preventDefault(); setView("citizenRegister"); }}
+  >
+    Citizen Registration
+  </a>
+  <a href="#"
+  style={styles.navLink}
+   onClick={(e) => { e.preventDefault(); setLoginIntent(null); setView("login"); }}
+>
+  Login
+</a>
+</nav>
+
+<div style={{ position: "relative" }}>
+  <button
+    style={styles.dotsBtn}
+    onMouseEnter={() => setShowComplainTooltip(true)}
+    onMouseLeave={() => setShowComplainTooltip(false)}
+    onClick={() => setShowComplainMenu((s) => !s)}
+  >
+    ⋮
+  </button>
+
+  {showComplainTooltip && !showComplainMenu && (
+    <div style={styles.tooltip}>Give Complain</div>
+  )}
+
+  {showComplainMenu && (
+    <div style={styles.dropdownMenu}>
+      <button
+        style={styles.dropdownItem}
+        onClick={() => {
+          setLoginIntent("complain");
+          setShowComplainMenu(false);
+          setView("login");
+        }}
+      >
+        Complain as Citizen
+      </button>
+      <button
+        style={styles.dropdownItem}
+        onClick={() => {
+          setLoginIntent("complain");
+          setShowComplainMenu(false);
+          setView("login");
+        }}
+      >
+        Complain as New Trainee
+      </button>
+      <button
+        style={styles.dropdownItem}
+        onClick={() => {
+          setShowComplainMenu(false);
+          setView("complainTraining");
+        }}
+      >
+        Complain for Fire Safety Training
+      </button>
+      <button
+        style={{ ...styles.dropdownItem, borderBottom: "none" }}
+        onClick={() => {
+          setShowComplainMenu(false);
+          setView("complainInspection");
+        }}
+      >
+        Complain for Fire Safety Inspection
+      </button>
+    </div>
+  )}
+</div>
         <a href="tel:999" style={styles.callBtn}>☎ Emergency: 999</a>
       </header>
 
@@ -86,6 +226,12 @@ export default function App() {
 
 </button>
           <button style={styles.secondaryBtn}>Find Nearest Station</button>
+           <button
+    style={styles.secondaryBtn}
+    onClick={() => setView("training")}
+  >
+    Training Request
+  </button>
         </div>
       </section>
 
@@ -232,6 +378,54 @@ const styles = {
     fontWeight: 600,
     fontSize: "14px",
   },
+  dotsBtn: {
+  background: "transparent",
+  border: "1px solid #3A3A40",
+  color: "#F5F3EF",
+  width: "36px",
+  height: "36px",
+  borderRadius: "6px",
+  cursor: "pointer",
+  fontSize: "18px",
+  lineHeight: 1,
+},
+tooltip: {
+  position: "absolute",
+  top: "44px",
+  right: 0,
+  background: "#1E1E22",
+  border: "1px solid #2A2A2E",
+  color: "#F5F3EF",
+  padding: "6px 12px",
+  borderRadius: "6px",
+  fontSize: "12px",
+  whiteSpace: "nowrap",
+  zIndex: 20,
+},
+dropdownMenu: {
+  position: "absolute",
+  top: "44px",
+  right: 0,
+  background: "#1E1E22",
+  border: "1px solid #2A2A2E",
+  borderRadius: "8px",
+  overflow: "hidden",
+  width: "260px",
+  zIndex: 20,
+  boxShadow: "0 10px 30px rgba(0,0,0,0.4)",
+},
+dropdownItem: {
+  display: "block",
+  width: "100%",
+  textAlign: "left",
+  background: "transparent",
+  border: "none",
+  color: "#F5F3EF",
+  padding: "12px 16px",
+  fontSize: "13px",
+  cursor: "pointer",
+  borderBottom: "1px solid #2A2A2E",
+},
   tickerBar: {
     display: "flex",
     alignItems: "center",
