@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import CitizenRegister from "./CitizenRegister.jsx";
+/*import CitizenRegister from "./CitizenRegister.jsx";
 import Login from "./Login.jsx";
 import Profile from "./Profile.jsx";
 import TrainingRequest from "./TrainingRequest.jsx";
 import TraineeProfile from "./TraineeProfile.jsx";
-import GeneralComplaint from "./GeneralComplaint.jsx";
+import GeneralComplaint from "./GeneralComplaint.jsx";*/
 
 // ---- FAKE DATA (swap with your Oracle DB API calls later) ----
 const stations = [
@@ -36,11 +36,11 @@ const statusColor = {
 
 export default function App() {
   const [tickerIndex, setTickerIndex] = useState(0);
-  const [view, setView] = useState("home");
+  //const [view, setView] = useState("home");
   const [showReportModal, setShowReportModal] = useState(false);
-  const [loginIntent, setLoginIntent] = useState(null); // null | "complain"
-const [showComplainTooltip, setShowComplainTooltip] = useState(false);
-const [showComplainMenu, setShowComplainMenu] = useState(false);
+  //const [loginIntent, setLoginIntent] = useState(null); // null | "complain"
+//const [showComplainTooltip, setShowComplainTooltip] = useState(false);
+//const [showComplainMenu, setShowComplainMenu] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -49,7 +49,7 @@ const [showComplainMenu, setShowComplainMenu] = useState(false);
     return () => clearInterval(id);
   }, []);
 
- if (view === "citizenRegister") {
+/*if (view === "citizenRegister") {
   return <CitizenRegister onBackHome={() => setView("home")} />;
 }
 if (view === "login") {
@@ -107,7 +107,7 @@ if (view === "complainInspection") {
     />
   );
 }
-
+*/
 return (
   <div style={styles.page}>
       <style>{globalCss}</style>
@@ -123,7 +123,8 @@ return (
   <a href="#safety" style={styles.navLink}>Safety</a>
   <a href="#" style={styles.navLink}>Staff Login</a>
   
-    <a href="#"
+{/*   
+   <a href="#"
     style={styles.navLink}
     onClick={(e) => { e.preventDefault(); setView("citizenRegister"); }}
   >
@@ -134,10 +135,11 @@ return (
    onClick={(e) => { e.preventDefault(); setLoginIntent(null); setView("login"); }}
 >
   Login
-</a>
+</a> */}
+
 </nav>
 
-<div style={{ position: "relative" }}>
+{/* <div style={{ position: "relative" }}>
   <button
     style={styles.dotsBtn}
     onMouseEnter={() => setShowComplainTooltip(true)}
@@ -193,7 +195,7 @@ return (
       </button>
     </div>
   )}
-</div>
+</div> */}
         <a href="tel:999" style={styles.callBtn}>☎ Emergency: 999</a>
       </header>
 
@@ -226,12 +228,12 @@ return (
 
 </button>
           <button style={styles.secondaryBtn}>Find Nearest Station</button>
-           <button
+           {/* <button
     style={styles.secondaryBtn}
     onClick={() => setView("training")}
   >
     Training Request
-  </button>
+  </button> */}
         </div>
       </section>
 
@@ -377,7 +379,7 @@ const styles = {
     textDecoration: "none",
     fontWeight: 600,
     fontSize: "14px",
-  },
+  /*},
   dotsBtn: {
   background: "transparent",
   border: "1px solid #3A3A40",
@@ -424,7 +426,7 @@ dropdownItem: {
   padding: "12px 16px",
   fontSize: "13px",
   cursor: "pointer",
-  borderBottom: "1px solid #2A2A2E",
+  borderBottom: "1px solid #2A2A2E", */
 },
   tickerBar: {
     display: "flex",
