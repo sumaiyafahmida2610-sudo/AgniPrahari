@@ -90,10 +90,12 @@ export default function AssignerDashboard({
   const [summary, setSummary] = useState(createEmptySummary)
   const [submittedSummaries, setSubmittedSummaries] = useState([])
   const [successMessage, setSuccessMessage] = useState('')
+  const [timelineError, setTimelineError] = useState('')
 
   const showView = (view) => {
     setActiveView(view)
     setSuccessMessage('')
+    setTimelineError('')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -101,6 +103,7 @@ export default function AssignerDashboard({
     const { name, value } = event.target
     setSummary((current) => ({ ...current, [name]: value }))
     setSuccessMessage('')
+    setTimelineError('')
   }
 
   const handleSummarySubmit = (event) => {
@@ -108,6 +111,20 @@ export default function AssignerDashboard({
 
     if (!event.currentTarget.checkValidity()) {
       event.currentTarget.reportValidity()
+      return
+    }
+
+    const arrivalDateTime = new Date(summary.arrivalTime).getTime()
+    const controlledDateTime = new Date(summary.fireControlledTime).getTime()
+    const completionDateTime = new Date(summary.completionTime).getTime()
+
+    if (controlledDateTime < arrivalDateTime) {
+      setTimelineError('Fire Controlled Date & Time cannot be earlier than Arrival Date & Time.')
+      return
+    }
+
+    if (completionDateTime < controlledDateTime) {
+      setTimelineError('Completion Date & Time cannot be earlier than Fire Controlled Date & Time.')
       return
     }
 
@@ -120,6 +137,7 @@ export default function AssignerDashboard({
     onSubmitSummary?.(responseRecord)
     console.log('Response summary submitted:', responseRecord)
     setSuccessMessage(`Response ${summary.responseId} submitted successfully.`)
+    setTimelineError('')
     setSummary(createEmptySummary())
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -364,15 +382,42 @@ export default function AssignerDashboard({
                   </div>
                 </div>
 
+                {timelineError && (
+                  <div className="ad-timeline-error" role="alert">
+                    <Icon name="alert" />
+                    <span>{timelineError}</span>
+                  </div>
+                )}
+
                 <div className="ad-form-grid ad-three-columns">
-                  <FormField label="Arrival Time" required>
-                    <input type="time" name="arrivalTime" value={summary.arrivalTime} onChange={updateSummary} required />
+                  <FormField label="Arrival Date & Time" required>
+                    <input
+                      type="datetime-local"
+                      name="arrivalTime"
+                      value={summary.arrivalTime}
+                      onChange={updateSummary}
+                      required
+                    />
                   </FormField>
-                  <FormField label="Fire Controlled Time" required>
-                    <input type="time" name="fireControlledTime" value={summary.fireControlledTime} onChange={updateSummary} required />
+                  <FormField label="Fire Controlled Date & Time" required>
+                    <input
+                      type="datetime-local"
+                      name="fireControlledTime"
+                      value={summary.fireControlledTime}
+                      onChange={updateSummary}
+                      min={summary.arrivalTime || undefined}
+                      required
+                    />
                   </FormField>
-                  <FormField label="Completion Time" required>
-                    <input type="time" name="completionTime" value={summary.completionTime} onChange={updateSummary} required />
+                  <FormField label="Completion Date & Time" required>
+                    <input
+                      type="datetime-local"
+                      name="completionTime"
+                      value={summary.completionTime}
+                      onChange={updateSummary}
+                      min={summary.fireControlledTime || summary.arrivalTime || undefined}
+                      required
+                    />
                   </FormField>
                 </div>
 
@@ -425,6 +470,7 @@ export default function AssignerDashboard({
                     onClick={() => {
                       setSummary(createEmptySummary())
                       setSuccessMessage('')
+                      setTimelineError('')
                     }}
                   >
                     Clear Form
@@ -474,45 +520,56 @@ const dashboardStyles = `
 
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
-  body { margin: 0; min-width: 320px; background: var(--ad-black); color: var(--ad-white); }
+  body {
+    margin: 0;
+    min-width: 320px;
+    background:
+      radial-gradient(circle at 12% 2%, rgba(213,41,48,.16), transparent 29rem),
+      radial-gradient(circle at 92% 24%, rgba(255,113,56,.06), transparent 26rem),
+      #08090c;
+    color: var(--ad-white);
+  }
+  body::before { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .22; background-image: linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px); background-size: 44px 44px; }
   button, input, textarea { font: inherit; }
   button { -webkit-tap-highlight-color: transparent; }
 
-  .assigner-dashboard { min-height: 100vh; background: var(--ad-black); color: var(--ad-white); }
+  .assigner-dashboard { min-height: 100vh; background: transparent; color: var(--ad-white); isolation: isolate; }
   .ad-icon { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
   .ad-topbar {
-    height: 82px;
-    padding: 0 clamp(22px, 5vw, 76px);
+    height: 76px;
+    padding: 0 clamp(20px, 4.5vw, 72px);
     display: flex;
     align-items: center;
     justify-content: space-between;
     position: sticky;
     top: 0;
     z-index: 30;
-    background: rgba(10, 10, 12, 0.9);
-    border-bottom: 1px solid var(--ad-line);
+    background: rgba(8,9,12,.82);
+    border-bottom: 1px solid rgba(255,255,255,.08);
     backdrop-filter: blur(14px);
+    box-shadow: 0 12px 36px rgba(0,0,0,.2);
   }
   .ad-brand { border: 0; padding: 0; background: none; color: white; cursor: pointer; font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; font-size: 29px; font-weight: 900; line-height: 1; letter-spacing: .035em; }
-  .ad-brand-prahari { color: var(--ad-red); }
-  .ad-secure-note { display: flex; align-items: center; gap: 10px; }
-  .ad-secure-note > svg { width: 28px; height: 28px; color: #34d399; }
+  .ad-brand-prahari { color: #f04444; text-shadow: 0 0 18px rgba(240,68,68,.18); }
+  .ad-secure-note { display: flex; align-items: center; gap: 10px; padding: 9px 13px; border: 1px solid rgba(97,226,154,.16); border-radius: 10px; background: rgba(42,118,76,.08); }
+  .ad-secure-note > svg { width: 25px; height: 25px; color: #62df9a; }
   .ad-secure-note span { display: grid; }
-  .ad-secure-note strong { color: #34d399; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
-  .ad-secure-note small { margin-top: 2px; color: var(--ad-muted); font-size: 12px; }
+  .ad-secure-note strong { color: #77e5a8; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+  .ad-secure-note small { margin-top: 2px; color: #778191; font-size: 12px; }
 
   .ad-shell {
-    width: min(1480px, calc(100% - 32px));
+    width: min(1460px, calc(100% - 36px));
     min-height: calc(100vh - 150px);
-    margin: 32px auto;
+    margin: 28px auto;
     display: grid;
-    grid-template-columns: 300px minmax(0, 1fr);
+    /* Keep the same red:black split as the registration/login pages. */
+    grid-template-columns: 31.65% minmax(0, 1fr);
     overflow: hidden;
-    background: var(--ad-surface);
-    border: 1px solid var(--ad-line);
-    border-radius: 20px;
-    box-shadow: 0 22px 70px rgba(0, 0, 0, 0.8);
+    background: #0d0f13;
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 22px;
+    box-shadow: 0 30px 90px rgba(0,0,0,.38);
   }
 
   .ad-sidebar {
@@ -522,37 +579,39 @@ const dashboardStyles = `
     flex-direction: column;
     position: relative;
     overflow: hidden;
-    background: linear-gradient(155deg, #180507 0%, #080203 100%);
-    border-right: 1px solid var(--ad-line);
+    background:
+      radial-gradient(circle at 96% 7%, rgba(255,179,70,.24), transparent 20rem),
+      linear-gradient(158deg, rgba(171,27,38,.98), rgba(77,12,22,.99) 48%, rgba(30,10,16,.99));
+    border-right: 1px solid rgba(255,164,104,.14);
   }
-  .ad-sidebar::before { content: ""; position: absolute; width: 320px; height: 320px; right: -220px; top: 17%; border: 1px solid rgba(217, 4, 41, .18); border-radius: 50%; box-shadow: 0 0 0 50px rgba(217, 4, 41, .025), 0 0 0 100px rgba(217, 4, 41, .012); }
-  .ad-sidebar::after { content: ""; position: absolute; inset: 0; opacity: .06; pointer-events: none; background-image: linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px); background-size: 34px 34px; mask-image: linear-gradient(to bottom, black, transparent 75%); }
+  .ad-sidebar::before { content: ""; position: absolute; width: 380px; height: 380px; right: -225px; top: 18%; border: 1px solid rgba(255,255,255,.11); border-radius: 50%; box-shadow: 0 0 0 58px rgba(255,255,255,.025), 0 0 0 125px rgba(255,255,255,.017); }
+  .ad-sidebar::after { content: ""; position: absolute; inset: 0; opacity: .22; pointer-events: none; background-image: linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px); background-size: 36px 36px; mask-image: linear-gradient(to bottom, #000, rgba(0,0,0,.45) 70%, transparent); }
   .ad-sidebar > * { position: relative; z-index: 1; }
 
-  .ad-profile { padding: 14px; display: flex; align-items: center; gap: 12px; background: rgba(18, 18, 21, .88); border: 1px solid var(--ad-line); border-radius: 14px; }
+  .ad-profile { padding: 14px; display: flex; align-items: center; gap: 12px; background: rgba(16,5,9,.18); border: 1px solid rgba(255,255,255,.18); border-radius: 14px; box-shadow: inset 0 1px rgba(255,255,255,.035); }
   .ad-avatar, .ad-hero-avatar { display: grid; place-items: center; color: white; background: linear-gradient(145deg, var(--ad-red), #750013); box-shadow: 0 8px 22px var(--ad-red-glow); font-weight: 850; }
-  .ad-avatar { width: 46px; height: 46px; flex: 0 0 auto; border-radius: 12px; font-size: 19px; }
+  .ad-avatar { width: 46px; height: 46px; flex: 0 0 auto; border: 1px solid rgba(255,193,111,.32); border-radius: 12px; background: #731621; box-shadow: 0 8px 22px rgba(54,4,12,.22); font-size: 19px; }
   .ad-profile div:last-child { min-width: 0; display: grid; }
-  .ad-profile span { color: var(--ad-muted); font-size: 9px; text-transform: uppercase; letter-spacing: .1em; }
+  .ad-profile span { color: rgba(255,255,255,.48); font-size: 9px; text-transform: uppercase; letter-spacing: .1em; }
   .ad-profile strong { overflow: hidden; margin: 2px 0; color: white; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
-  .ad-profile small { color: #ff8a93; font-size: 10px; }
+  .ad-profile small { color: #ffc16f; font-size: 10px; }
 
   .ad-nav { margin-top: 32px; display: flex; flex-direction: column; gap: 8px; }
-  .ad-nav-label { margin: 0 10px 5px; color: #64748b; font-size: 9px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
-  .ad-nav button, .ad-logout { width: 100%; padding: 12px 13px; display: flex; align-items: center; gap: 11px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: #cbd5e1; cursor: pointer; font-size: 13px; font-weight: 650; text-align: left; transition: .18s ease; }
-  .ad-nav button:hover { background: rgba(255,255,255,.04); color: white; }
-  .ad-nav button.active { color: white; background: rgba(217, 4, 41, .13); border-color: rgba(217, 4, 41, .28); box-shadow: inset 3px 0 0 var(--ad-red); }
-  .ad-nav button.active svg { color: var(--ad-red); }
+  .ad-nav-label { margin: 0 10px 5px; color: rgba(255,255,255,.42); font-size: 9px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+  .ad-nav button, .ad-logout { width: 100%; padding: 12px 13px; display: flex; align-items: center; gap: 11px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: rgba(255,255,255,.76); cursor: pointer; font-size: 13px; font-weight: 650; text-align: left; transition: .18s ease; }
+  .ad-nav button:hover { background: rgba(255,255,255,.075); color: white; transform: translateX(2px); }
+  .ad-nav button.active { color: white; background: rgba(10,4,7,.2); border-color: rgba(255,255,255,.14); box-shadow: inset 3px 0 0 #ffc16f; }
+  .ad-nav button.active svg { color: #ffc16f; }
   .ad-nav button:nth-of-type(3) { align-items: flex-start; }
   .ad-nav button:nth-of-type(3) span { line-height: 1.35; }
 
-  .ad-sidebar-status { margin-top: auto; margin-bottom: 14px; padding: 14px; display: grid; background: var(--ad-card); border: 1px solid var(--ad-line); border-radius: 10px; }
-  .ad-sidebar-status span { display: flex; align-items: center; gap: 7px; color: #34d399; font-size: 11px; font-weight: 700; }
+  .ad-sidebar-status { margin-top: auto; margin-bottom: 14px; padding: 14px; display: grid; background: rgba(17,63,42,.13); border: 1px solid rgba(118,234,164,.15); border-radius: 10px; }
+  .ad-sidebar-status span { display: flex; align-items: center; gap: 7px; color: #78eda9; font-size: 11px; font-weight: 700; }
   .ad-sidebar-status i, .ad-live-badge i { width: 7px; height: 7px; display: inline-block; border-radius: 50%; background: #34d399; box-shadow: 0 0 0 5px rgba(52, 211, 153, .13); }
-  .ad-sidebar-status small { margin-top: 6px; color: var(--ad-muted); font-size: 10px; }
-  .ad-logout { border-color: var(--ad-line); background: var(--ad-card); }
-  .ad-logout:hover { color: white; border-color: rgba(217, 4, 41, .35); background: rgba(217, 4, 41, .08); }
-  .ad-logout svg { color: var(--ad-red); }
+  .ad-sidebar-status small { margin-top: 6px; color: rgba(255,255,255,.42); font-size: 10px; }
+  .ad-logout { border-color: rgba(255,255,255,.13); background: rgba(10,4,7,.2); }
+  .ad-logout:hover { color: white; border-color: rgba(255,193,111,.32); background: rgba(255,255,255,.075); }
+  .ad-logout svg { color: #ffc16f; }
 
   .ad-content { min-width: 0; padding: clamp(30px, 4vw, 62px); background: var(--ad-surface); }
   .ad-view { animation: adFade .23s ease; }
@@ -631,6 +690,8 @@ const dashboardStyles = `
   .ad-form-section-title { margin-bottom: 22px; }
   .ad-form-section-title div:last-child { padding-top: 2px; }
   .ad-form-divider { height: 1px; margin: 31px 0; background: var(--ad-line); }
+  .ad-timeline-error { margin: -4px 0 18px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; color: #fda4af; background: rgba(225,29,72,.08); border: 1px solid rgba(225,29,72,.24); border-radius: 9px; font-size: 12px; line-height: 1.45; }
+  .ad-timeline-error svg { width: 19px; height: 19px; flex: 0 0 auto; }
   .ad-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
   .ad-three-columns { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ad-field { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
@@ -650,14 +711,14 @@ const dashboardStyles = `
 
   .ad-footer { width: min(1480px, calc(100% - 32px)); margin: 0 auto; padding: 0 0 25px; display: flex; justify-content: space-between; color: var(--ad-muted); font-size: 11px; }
 
-  @media (max-width: 980px) {
-    .ad-shell { grid-template-columns: 240px minmax(0, 1fr); }
-    .ad-sidebar { padding-inline: 14px; }
+  @media (max-width: 1120px) {
+    /* Do not shrink the red side to a fixed 340px at browser zoom. */
+    .ad-shell { grid-template-columns: 31.65% minmax(0, 1fr); }
     .ad-content { padding: 32px 26px; }
     .ad-three-columns { grid-template-columns: 1fr; }
   }
 
-  @media (max-width: 760px) {
+  @media (max-width: 860px) {
     .ad-topbar { height: 72px; padding: 0 18px; }
     .ad-secure-note small { display: none; }
     .ad-shell { width: min(100% - 20px, 1480px); margin: 18px auto; grid-template-columns: 1fr; }
