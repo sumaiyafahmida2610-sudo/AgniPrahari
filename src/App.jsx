@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // ---- FAKE DATA (swap with your Oracle DB API calls later) ----
 const stations = [
@@ -42,6 +42,31 @@ const BUILDING_TYPES = [
   "Other",
 ];
 
+// ---- LOGIN ROLE OPTIONS ----
+const LOGIN_ROLES = [
+  {
+    key: "personnel",
+    title: "Personnel Login",
+    subtitle: "Firefighters & station staff",
+    icon: "🚒",
+    to: "/login/personnel",
+  },
+  {
+    key: "trainee",
+    title: "Trainee Login",
+    subtitle: "Cadets & training program",
+    icon: "🎓",
+    to: "/login/trainee",
+  },
+  {
+    key: "citizen",
+    title: "Citizen Login",
+    subtitle: "Track reports & alerts",
+    icon: "🧑‍🤝‍🧑",
+    to: "/login/citizen",
+  },
+];
+
 const dhakaAreas = [
   "Adabor",
   "Agargaon",
@@ -49,6 +74,7 @@ const dhakaAreas = [
   "Airport",
   "Azimpur",
   "Badda",
+  "Bijoy Sarani",
   "Banasree",
   "Banani",
   "Bangshal",
@@ -162,12 +188,34 @@ export default function App() {
   const [areaSearch, setAreaSearch] = useState("");
   const [areaDropdownOpen, setAreaDropdownOpen] = useState(false);
 
+  // ---- Login dropdown state ----
+  const [loginOpen, setLoginOpen] = useState(false);
+  const loginRef = useRef(null);
+
   useEffect(() => {
     const id = setInterval(() => {
       setTickerIndex((i) => (i + 1) % ticker.length);
     }, 3500);
     return () => clearInterval(id);
   }, []);
+
+  // Close the login dropdown when clicking outside of it
+  useEffect(() => {
+    if (!loginOpen) return;
+    const handleOutsideClick = (e) => {
+      if (loginRef.current && !loginRef.current.contains(e.target)) {
+        setLoginOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [loginOpen]);
+
+  const handleLoginSelect = (role) => {
+    // TODO: route to the actual login page / auth flow for this role
+    console.log("Login selected:", role.key);
+    setLoginOpen(false);
+  };
 
   const isFire = form.incidentType === "Fire";
 
@@ -253,7 +301,45 @@ export default function App() {
           <a href="#safety" style={styles.navLink}>Safety</a>
           <Link to="/staff_register" style={styles.navLink}>Staff Register</Link>
         </nav>
-        <a href="tel:999" style={styles.callBtn}>☎ Emergency: 999</a>
+
+        <div style={styles.navRight}>
+          {/* LOGIN DROPDOWN */}
+          <div style={styles.loginWrap} ref={loginRef}>
+            <button
+              type="button"
+              style={styles.loginBtn}
+              onClick={() => setLoginOpen((prev) => !prev)}
+              aria-haspopup="true"
+              aria-expanded={loginOpen}
+            >
+              Login
+              <span style={styles.chevronSmall}>{loginOpen ? "▲" : "▼"}</span>
+            </button>
+
+            {loginOpen && (
+              <div style={styles.loginDropdown}>
+                <div style={styles.loginDropdownHeader}>Continue as</div>
+                {LOGIN_ROLES.map((role) => (
+                  <button
+                    key={role.key}
+                    type="button"
+                    className="login-option"
+                    style={styles.loginOption}
+                    onClick={() => handleLoginSelect(role)}
+                  >
+                    <span style={styles.loginOptionIcon}>{role.icon}</span>
+                    <span style={styles.loginOptionTextWrap}>
+                      <span style={styles.loginOptionTitle}>{role.title}</span>
+                      <span style={styles.loginOptionSubtitle}>{role.subtitle}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <a href="tel:999" style={styles.callBtn}>☎ Emergency: 999</a>
+        </div>
       </header>
 
       {/* DISPATCH TICKER */}
@@ -578,9 +664,11 @@ const globalCss = `
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
   @keyframes modalIn { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes dropIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
   select option { background: #1E1E22; color: #F5F3EF; }
   input::placeholder { color: #6E6E76; }
   .area-option:hover { background: rgba(255,255,255,0.08) !important; }
+  .login-option:hover { background: rgba(255,255,255,0.07) !important; }
 `;
 
 const styles = {
@@ -610,6 +698,11 @@ const styles = {
     fontSize: "14px",
     fontWeight: 500,
   },
+  navRight: {
+    display: "flex",
+    alignItems: "center",
+    gap: "14px",
+  },
   callBtn: {
     background: "#E63927",
     color: "#fff",
@@ -619,6 +712,82 @@ const styles = {
     fontWeight: 600,
     fontSize: "14px",
   },
+
+  // ---- Login button + dropdown ----
+  loginWrap: {
+    position: "relative",
+  },
+  loginBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    background: "transparent",
+    color: "#F5F3EF",
+    border: "1px solid #3A3A40",
+    padding: "10px 16px",
+    borderRadius: "6px",
+    fontWeight: 600,
+    fontSize: "14px",
+    cursor: "pointer",
+    fontFamily: "'Inter', sans-serif",
+  },
+  chevronSmall: {
+    fontSize: "9px",
+    color: "#9A9AA2",
+  },
+  loginDropdown: {
+    position: "absolute",
+    top: "calc(100% + 8px)",
+    right: 0,
+    width: "260px",
+    background: "rgba(28, 28, 32, 0.98)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    borderRadius: "10px",
+    boxShadow: "0 12px 30px rgba(0,0,0,0.5)",
+    padding: "8px",
+    zIndex: 30,
+    animation: "dropIn 0.15s ease",
+  },
+  loginDropdownHeader: {
+    fontSize: "11px",
+    fontWeight: 700,
+    letterSpacing: "1px",
+    textTransform: "uppercase",
+    color: "#6E6E76",
+    padding: "6px 10px 8px",
+  },
+  loginOption: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    width: "100%",
+    background: "transparent",
+    border: "none",
+    borderRadius: "8px",
+    padding: "10px",
+    cursor: "pointer",
+    textAlign: "left",
+    fontFamily: "'Inter', sans-serif",
+  },
+  loginOptionIcon: {
+    fontSize: "18px",
+    lineHeight: 1,
+  },
+  loginOptionTextWrap: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "2px",
+  },
+  loginOptionTitle: {
+    fontSize: "13px",
+    fontWeight: 600,
+    color: "#F5F3EF",
+  },
+  loginOptionSubtitle: {
+    fontSize: "11px",
+    color: "#9A9AA2",
+  },
+
   tickerBar: {
     display: "flex",
     alignItems: "center",
