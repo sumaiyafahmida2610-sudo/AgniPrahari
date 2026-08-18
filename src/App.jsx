@@ -56,7 +56,7 @@ const LOGIN_ROLES = [
     title: "Trainee Login",
     subtitle: "Cadets & training program",
     icon: "🎓",
-    to: "/trainee_profile",
+    to:  "/login/trainee",
   },
   {
     key: "citizen",
