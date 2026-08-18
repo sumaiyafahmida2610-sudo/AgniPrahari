@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 const initialForm = {
   fullName: '',
@@ -211,6 +212,9 @@ export default function AssignerRegistration() {
             <span className="brand-prahari">PRAHARI</span>
           </span>
         </a>
+<Link to="/" className="back-home-btn">
+    ← Back to Home
+  </Link>
 
         <div className="secure-note">
           <ShieldIcon />
@@ -591,6 +595,7 @@ const pageStyles = `
     top: 0;
     z-index: 20;
     backdrop-filter: blur(14px);
+    gap: 18px;
   }
 
   .brand { display: flex; align-items: center; color: #ffffff; text-decoration: none; }
@@ -612,7 +617,26 @@ const pageStyles = `
   .secure-note span { display: grid; }
   .secure-note strong { color: #34d399; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
   .secure-note small { color: var(--muted); font-size: 12px; margin-top: 2px; }
-
+.back-home-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 15px;
+  color: #cbd5e1;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: .2s ease;
+}
+.back-home-btn:hover {
+  color: var(--red-accent);
+  border-color: var(--red-accent);
+  transform: translateY(-1px);
+}
   .page-shell {
     width: min(1480px, calc(100% - 32px));
     margin: 32px auto;

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useRef, useState } from 'react'
 
 const initialForm = {
@@ -281,6 +282,10 @@ export default function FirefighterRegistration() {
             <span className="brand-prahari">PRAHARI</span>
           </span>
         </a>
+
+        <Link to="/" className="back-home-btn">
+          <span aria-hidden="true">←</span> Back to Home
+        </Link>
 
         <div className="secure-note">
           <ShieldIcon />
@@ -750,6 +755,7 @@ const pageStyles = `
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 18px;
     position: sticky;
     top: 0;
     z-index: 20;
@@ -769,6 +775,27 @@ const pageStyles = `
   }
   .brand-agni { color: currentColor; }
   .brand-prahari { color: var(--red); }
+
+  .back-home-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 15px;
+    color: var(--navy);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: .2s ease;
+  }
+  .back-home-btn:hover {
+    color: var(--red);
+    border-color: var(--red);
+    transform: translateY(-1px);
+  }
 
   .secure-note { display: flex; align-items: center; gap: 10px; }
   .secure-note svg { width: 28px; fill: none; stroke: #20825b; stroke-width: 1.8; }
@@ -968,6 +995,7 @@ const pageStyles = `
   @media (max-width: 580px) {
     .topbar { padding: 0 17px; }
     .brand-wordmark { font-size: 25px; }
+    .back-home-btn { padding: 7px 11px; font-size: 11px; }
     .page-shell { width: 100%; margin: 0; border: 0; border-radius: 0; box-shadow: none; }
     .intro-content { padding: 38px 22px; }
     .intro-content h1 { font-size: 39px; }

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { useState, useEffect, useRef } from "react";
 
@@ -56,7 +56,7 @@ const LOGIN_ROLES = [
     title: "Trainee Login",
     subtitle: "Cadets & training program",
     icon: "🎓",
-    to: "/login/trainee",
+    to: "/trainee_profile",
   },
   {
     key: "citizen",
@@ -181,6 +181,7 @@ const initialFormState = {
 };
 
 export default function App() {
+  const navigate = useNavigate();
   const [tickerIndex, setTickerIndex] = useState(0);
   const [showReportModal, setShowReportModal] = useState(false);
   const [form, setForm] = useState(initialFormState);
@@ -190,6 +191,7 @@ export default function App() {
 
   // ---- Login dropdown state ----
   const [loginOpen, setLoginOpen] = useState(false);
+  const [personnelOpen, setPersonnelOpen] = useState(false);
   const loginRef = useRef(null);
 
   useEffect(() => {
@@ -205,6 +207,7 @@ export default function App() {
     const handleOutsideClick = (e) => {
       if (loginRef.current && !loginRef.current.contains(e.target)) {
         setLoginOpen(false);
+        setPersonnelOpen(false);
       }
     };
     document.addEventListener("mousedown", handleOutsideClick);
@@ -212,9 +215,20 @@ export default function App() {
   }, [loginOpen]);
 
   const handleLoginSelect = (role) => {
-    // TODO: route to the actual login page / auth flow for this role
-    console.log("Login selected:", role.key);
+    // Personnel Login expands a sub-bar instead of navigating immediately
+    if (role.key === "personnel") {
+      setPersonnelOpen((prev) => !prev);
+      return;
+    }
     setLoginOpen(false);
+    setPersonnelOpen(false);
+    navigate(role.to);
+  };
+
+  const handlePersonnelSubSelect = (path) => {
+    setLoginOpen(false);
+    setPersonnelOpen(false);
+    navigate(path);
   };
 
   const isFire = form.incidentType === "Fire";
@@ -296,7 +310,7 @@ export default function App() {
           AGNI<span style={{ color: "#E63927" }}>PRAHARI</span>
         </div>
         <nav style={styles.navLinks}>
-          <a href="#stations" style={styles.navLink}>Stations</a>
+          {/* <a href="#stations" style={styles.navLink}>Stations</a> */}
           <a href="#stats" style={styles.navLink}>Live Stats</a>
           <a href="#safety" style={styles.navLink}>Safety</a>
           <Link to="/staff_register" style={styles.navLink}>Staff Register</Link>
@@ -320,19 +334,48 @@ export default function App() {
               <div style={styles.loginDropdown}>
                 <div style={styles.loginDropdownHeader}>Continue as</div>
                 {LOGIN_ROLES.map((role) => (
-                  <button
-                    key={role.key}
-                    type="button"
-                    className="login-option"
-                    style={styles.loginOption}
-                    onClick={() => handleLoginSelect(role)}
-                  >
-                    <span style={styles.loginOptionIcon}>{role.icon}</span>
-                    <span style={styles.loginOptionTextWrap}>
-                      <span style={styles.loginOptionTitle}>{role.title}</span>
-                      <span style={styles.loginOptionSubtitle}>{role.subtitle}</span>
-                    </span>
-                  </button>
+                  <div key={role.key}>
+                    <button
+                      type="button"
+                      className="login-option"
+                      style={styles.loginOption}
+                      onClick={() => handleLoginSelect(role)}
+                      aria-haspopup={role.key === "personnel" ? "true" : undefined}
+                      aria-expanded={role.key === "personnel" ? personnelOpen : undefined}
+                    >
+                      <span style={styles.loginOptionIcon}>{role.icon}</span>
+                      <span style={styles.loginOptionTextWrap}>
+                        <span style={styles.loginOptionTitle}>{role.title}</span>
+                        <span style={styles.loginOptionSubtitle}>{role.subtitle}</span>
+                      </span>
+                      {role.key === "personnel" && (
+                        <span style={styles.chevronSmall}>
+                          {personnelOpen ? "▲" : "▼"}
+                        </span>
+                      )}
+                    </button>
+
+                    {role.key === "personnel" && personnelOpen && (
+                      <div style={styles.personnelSubBar}>
+                        <button
+                          type="button"
+                          className="login-option"
+                          style={styles.personnelSubOption}
+                          onClick={() => handlePersonnelSubSelect("/login/firefighter")}
+                        >
+                          🚒 Firefighter
+                        </button>
+                        <button
+                          type="button"
+                          className="login-option"
+                          style={styles.personnelSubOption}
+                          onClick={() => handlePersonnelSubSelect("/assigner_dashboard")}
+                        >
+                          📋 Assigner
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             )}
@@ -366,6 +409,12 @@ export default function App() {
           </button>
           <button style={styles.secondaryBtn}>Find Nearest Station</button>
         </div>
+        <Link to="/citizen_register" style={styles.citizenBtn}>
+          Citizen Register
+        </Link>
+        <Link to="/training_request" style={styles.citizenBtn}>
+          Request Training
+        </Link>
       </section>
 
       {/* STATS */}
@@ -788,6 +837,23 @@ const styles = {
     color: "#9A9AA2",
   },
 
+  // ---- Personnel sub-bar (Firefighter / Assigner) ----
+  personnelSubBar: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+    marginLeft: "18px",
+    marginTop: "2px",
+    marginBottom: "4px",
+    paddingLeft: "10px",
+    borderLeft: "2px solid rgba(255,255,255,0.1)",
+  },
+  personnelSubOption: {
+    padding: "8px 10px",
+    fontSize: "12px",
+    color: "#D8D8DE",
+  },
+
   tickerBar: {
     display: "flex",
     alignItems: "center",
@@ -1128,5 +1194,19 @@ const styles = {
     padding: "9px 10px",
     fontSize: "13px",
     color: "#6E6E76",
+  },
+  citizenBtn: {
+    display: "inline-block",
+    marginTop: "18px",
+    marginRight: "12px",
+    background: "transparent",
+    color: "#F5F3EF",
+    border: "1px solid #3A3A40",
+    padding: "14px 26px",
+    borderRadius: "6px",
+    fontWeight: 600,
+    fontSize: "15px",
+    textDecoration: "none",
+    cursor: "pointer",
   },
 };
