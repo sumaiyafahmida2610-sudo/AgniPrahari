@@ -1,44 +1,47 @@
 import { useState } from "react";
 
-export default function Login({ onBackHome, onLoginSuccess }) {
+export default function Login({ onBackHome, onLoginSuccess, role }) {
+    
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+
+    const handleSubmit = (e) => {
     e.preventDefault();
     if (!loginId.trim() || !password.trim()) {
       setError("Please enter both ID and Password.");
       return;
     }
 
-    const savedCitizen = localStorage.getItem("agni_citizen_profile");
-    const savedTrainee = localStorage.getItem("agni_trainee_profile");
-
-    // Try citizen login first (Incident ID)
-    if (savedCitizen) {
-      const citizen = JSON.parse(savedCitizen);
-      if (
-        loginId.trim() === citizen.incidentId &&
-        password === citizen.password
-      ) {
-        setError("");
-        onLoginSuccess("citizen");
-        return;
+    if (role === "citizen") {
+      const savedCitizen = localStorage.getItem("agni_citizen_profile");
+      if (savedCitizen) {
+        const citizen = JSON.parse(savedCitizen);
+        if (
+          loginId.trim() === citizen.incidentId &&
+          password === citizen.password
+        ) {
+          setError("");
+          onLoginSuccess("citizen");
+          return;
+        }
       }
     }
 
-    // Try trainee login (Training ID)
-    if (savedTrainee) {
-      const trainee = JSON.parse(savedTrainee);
-      if (
-        loginId.trim() === trainee.trainingId &&
-        password === trainee.password
-      ) {
-        setError("");
-        onLoginSuccess("trainee");
-        return;
+    if (role === "trainee") {
+      const savedTrainee = localStorage.getItem("agni_trainee_profile");
+      if (savedTrainee) {
+        const trainee = JSON.parse(savedTrainee);
+        if (
+          loginId.trim() === trainee.trainingId &&
+          password === trainee.password
+        ) {
+          setError("");
+          onLoginSuccess("trainee");
+          return;
+        }
       }
     }
 
@@ -60,9 +63,10 @@ export default function Login({ onBackHome, onLoginSuccess }) {
         <div style={styles.card}>
           <h1 style={styles.title}>Login</h1>
           <p style={styles.subtitle}>
-            Citizens log in with their Incident ID. Trainees log in with their
-            Training ID.
-          </p>
+  {role === "citizen"
+    ? "Log in with your Incident ID."
+    : "Log in with your Training ID."}
+</p>
 
           {error && <div style={styles.errorBox}>{error}</div>}
 
