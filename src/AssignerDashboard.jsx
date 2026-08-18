@@ -85,6 +85,7 @@ export default function AssignerDashboard({
   complaintHistory = [],
   onSubmitSummary,
   onLogout,
+  onBackHome,
 }) {
   const [activeView, setActiveView] = useState('dashboard')
   const [summary, setSummary] = useState(createEmptySummary)
@@ -167,6 +168,10 @@ export default function AssignerDashboard({
             <small>Authorized personnel only</small>
           </span>
         </div>
+
+        <button type="button" className="back-home-btn" onClick={onBackHome}>
+          ← Back to Home
+        </button>
       </header>
 
       <div className="ad-shell">
@@ -557,6 +562,19 @@ const dashboardStyles = `
   .ad-secure-note span { display: grid; }
   .ad-secure-note strong { color: #77e5a8; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
   .ad-secure-note small { margin-top: 2px; color: #778191; font-size: 12px; }
+
+  .back-home-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,.16);
+    color: var(--ad-white);
+    padding: 9px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 650;
+    transition: border-color .18s, background .18s;
+  }
+  .back-home-btn:hover { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.28); }
 
   .ad-shell {
     width: min(1460px, calc(100% - 36px));
