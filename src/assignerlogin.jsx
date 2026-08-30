@@ -51,7 +51,7 @@ function EyeClosedIcon() {
   )
 }
 
-export default function FirefighterLogin({ onBackHome }) {
+export default function FirefighterLogin() {
   const [form, setForm] = useState({ email: '', password: '', remember: false })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
@@ -119,10 +119,6 @@ export default function FirefighterLogin({ onBackHome }) {
             <small>Authorized personnel only</small>
           </span>
         </div>
-
-        <button type="button" className="back-home-btn" onClick={onBackHome}>
-          ← Back to Home
-        </button>
       </header>
 
       <main id="top" className="page-shell">
@@ -133,7 +129,7 @@ export default function FirefighterLogin({ onBackHome }) {
               <span /> Staff portal · Secure
             </span>
             <h1>
-              Welcome back, <em>firefighter</em>
+              Welcome back, <em>Assigner</em>
             </h1>
             <p>
               Access your duty roster, incident reports, training records, and
@@ -178,7 +174,7 @@ export default function FirefighterLogin({ onBackHome }) {
           <div className="form-heading">
             <div>
               <span>Staff portal</span>
-              <h2 id="login-title">Firefighter Login</h2>
+              <h2 id="login-title">Assigner Login</h2>
               <p>Enter your credentials to access the operations console.</p>
             </div>
             <div className="form-step">
@@ -406,19 +402,6 @@ const pageStyles = `
   .secure-note span { display: grid; }
   .secure-note strong { color: #77e5a8; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
   .secure-note small { color: #778191; font-size: 12px; margin-top: 2px; }
-
-  .back-home-btn {
-    background: transparent;
-    border: 1px solid rgba(255,255,255,.16);
-    color: var(--ink);
-    padding: 9px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 650;
-    transition: border-color .18s, background .18s;
-  }
-  .back-home-btn:hover { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.28); }
 
   .page-shell {
     width: min(1460px, calc(100% - 36px));
