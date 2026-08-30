@@ -289,16 +289,43 @@ export default function App() {
     return newErrors;
   };
 
-  const handleSubmit = () => {
-    const newErrors = validate();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
+  // const handleSubmit = () => {
+  //   const newErrors = validate();
+  //   if (Object.keys(newErrors).length > 0) {
+  //     setErrors(newErrors);
+  //     return;
+  //   }
+  //   // TODO: wire this up to your Oracle DB / API endpoint
+  //   console.log("Incident report submitted:", form);
+  //   closeModal();
+  // };
+
+  const handleSubmit = async () => {
+  const newErrors = validate();
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    return;
+  }
+
+  try {
+    const res = await fetch("http://localhost:3000/api/incident-report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+
+    if (!res.ok) {
+      throw new Error("Server responded with an error");
     }
-    // TODO: wire this up to your Oracle DB / API endpoint
-    console.log("Incident report submitted:", form);
+
+    const data = await res.json();
+    console.log("Success:", data);
     closeModal();
-  };
+  } catch (err) {
+    console.error("Failed to submit report:", err);
+    alert("Something went wrong submitting your report. Please try again.");
+  }
+};
 
   return (
     <div style={styles.page}>

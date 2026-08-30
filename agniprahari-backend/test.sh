@@ -1,0 +1,1 @@
+curl -i -X POST http://localhost:3000/api/incident-report -H "Content-Type: application/json" -d '{"name":"Test User","phone":"01712345678","area":"Mirpur-10","detailedLocation":"Near mosque","incidentType":"Fire","fireSize":"Medium","trappedCount":"2","buildingType":"Residential"}'
