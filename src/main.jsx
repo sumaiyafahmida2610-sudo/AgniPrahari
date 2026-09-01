@@ -13,6 +13,24 @@ import Profile from  './Profile.jsx'
 import Login from  './Login.jsx'
  import TraineeProfile from './TraineeProfile.jsx'
 import { useNavigate } from 'react-router-dom'
+import FireFighterDashboard from './FireFigherDashboard.jsx'
+
+
+function FirefighterLoginWrapper() {
+  const navigate = useNavigate()
+  return (
+    <FirefighterLogin
+      onBackHome={() => navigate('/')}
+      onLoginSuccess={() => navigate('/firefighter_dashboard')}
+    />
+  )
+}
+
+function FireFighterDashboardWrapper() {
+  const navigate = useNavigate()
+  return <FireFighterDashboard onLogout={() => navigate('/')} />
+}
+
 
 function CitizenProfileWrapper() {
   const navigate = useNavigate()
@@ -74,8 +92,10 @@ createRoot(document.getElementById('root')).render(
         
         <Route path="/citizen_register" element={<CitizenRegisterWrapper />} />
         <Route path="/training_request" element={<TrainingRequestWrapper />} />
-         <Route path="/login/firefighter" element={<FirefighterLogin />} /> 
-          //<Route path="/login/firefighter" element={<Login />} />
+         {/* <Route path="/login/firefighter" element={<FirefighterLogin />} />  */}
+         <Route path="/login/firefighter" element={<FirefighterLoginWrapper />} />
+         <Route path="/firefighter_dashboard" element={<FireFighterDashboardWrapper />} />
+          {/* <Route path="/login/firefighter" element={<Login />} /> */}
 <Route path="/assigner_dashboard" element={<AssignerDashboard />} />
          <Route path="/trainee_profile" element={<TraineeProfileWrapper />} /> 
       </Routes>

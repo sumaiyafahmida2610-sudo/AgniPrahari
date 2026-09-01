@@ -51,7 +51,7 @@ function EyeClosedIcon() {
   )
 }
 
-export default function FirefighterLogin({ onBackHome }) {
+export default function FirefighterLogin({ onBackHome ,onLoginSuccess}) {
   const [form, setForm] = useState({ email: '', password: '', remember: false })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
@@ -69,34 +69,69 @@ export default function FirefighterLogin({ onBackHome }) {
     setSuccess(false)
   }
 
+  // const handleSubmit = async (event) => {
+  //   event.preventDefault()
+  //   setError('')
+  //   setSuccess(false)
+
+  //   if (!event.currentTarget.checkValidity()) {
+  //     event.currentTarget.reportValidity()
+  //     return
+  //   }
+
+  //   setLoading(true)
+
+  //   try {
+  //     await new Promise((resolve) => setTimeout(resolve, 1200))
+  //     console.log('Firefighter login:', {
+  //       email: form.email,
+  //       password: form.password,
+  //       remember: form.remember,
+  //       timestamp: new Date().toISOString(),
+  //     })
+  //     setSuccess(true)
+  //     window.scrollTo({ top: 0, behavior: 'smooth' })
+  //   } catch {
+  //     setError('Unable to connect to the authentication server.')
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
+
+
   const handleSubmit = async (event) => {
-    event.preventDefault()
-    setError('')
-    setSuccess(false)
+  event.preventDefault()
+  setError('')
+  setSuccess(false)
 
-    if (!event.currentTarget.checkValidity()) {
-      event.currentTarget.reportValidity()
-      return
-    }
-
-    setLoading(true)
-
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1200))
-      console.log('Firefighter login:', {
-        email: form.email,
-        password: form.password,
-        remember: form.remember,
-        timestamp: new Date().toISOString(),
-      })
-      setSuccess(true)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    } catch {
-      setError('Unable to connect to the authentication server.')
-    } finally {
-      setLoading(false)
-    }
+  if (!event.currentTarget.checkValidity()) {
+    event.currentTarget.reportValidity()
+    return
   }
+
+  setLoading(true)
+
+  try {
+    await new Promise((resolve) => setTimeout(resolve, 1200))
+    console.log('Firefighter login:', {
+      email: form.email,
+      password: form.password,
+      remember: form.remember,
+      timestamp: new Date().toISOString(),
+    })
+    setSuccess(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+
+    // give the user a beat to see the success message, then redirect
+    setTimeout(() => {
+      onLoginSuccess?.()
+    }, 900)
+  } catch {
+    setError('Unable to connect to the authentication server.')
+  } finally {
+    setLoading(false)
+  }
+}
 
   const isFilled = form.email.trim().length > 0 && form.password.length > 0
 

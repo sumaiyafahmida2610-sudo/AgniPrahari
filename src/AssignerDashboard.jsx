@@ -1,4 +1,5 @@
-import { useState } from 'react'
+// import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const defaultAssigner = {
   assignmentId: 'ASN-2026-0048',
@@ -29,6 +30,128 @@ const createEmptySummary = () => ({
   propertyDamage: '',
   remarks: '',
 })
+
+// ---- MOCK DATA (swap with real Oracle/Next.js API calls later) ----
+
+const FIRE_STATIONS = {
+  'FS-01': 'Mirpur Central',
+  'FS-02': 'Motijheel HQ',
+  'FS-03': 'Uttara Station',
+  'FS-04': 'Dhanmondi Sub',
+  'FS-05': 'Gulshan Station',
+}
+
+// mirrors the `location` table: area -> [priority_1, priority_2, priority_3]
+const LOCATION_PRIORITIES = {
+  'Mirpur-10': ['FS-01', 'FS-03', 'FS-05'],
+  Dhanmondi: ['FS-04', 'FS-01', 'FS-02'],
+  'Gulshan-1': ['FS-05', 'FS-02', 'FS-04'],
+}
+
+// mirrors `complaint` + `emergency`
+const initialEmergencyComplaints = [
+  {
+    complaintId: 'CMP-3001',
+    reportTime: '2026-08-29 14:32',
+    incidentType: 'Fire',
+    fireSize: 'Medium',
+    buildingType: 'Residential',
+    trappedPersonCount: 2,
+    incidentStatus: 'Reported',
+    area: 'Mirpur-10',
+    detailedLocation: 'Road 5, House 12, near Mirpur-10 circle',
+    requests: Object.fromEntries(
+      (LOCATION_PRIORITIES['Mirpur-10'] || []).map((sid) => [sid, 'not_requested'])
+    ),
+  },
+  {
+    complaintId: 'CMP-3002',
+    reportTime: '2026-08-29 15:10',
+    incidentType: 'Rescue',
+    fireSize: null,
+    buildingType: 'Commercial',
+    trappedPersonCount: 0,
+    incidentStatus: 'Reported',
+    area: 'Dhanmondi',
+    detailedLocation: 'Road 27, Dhanmondi, near the lake',
+    requests: Object.fromEntries(
+      (LOCATION_PRIORITIES['Dhanmondi'] || []).map((sid) => [sid, 'not_requested'])
+    ),
+  },
+]
+
+// mirrors `complaint` + `general_feedback`
+const initialCitizenComplaints = [
+  {
+    complaintId: 'CMP-4001',
+    complaintDate: '2026-08-20',
+    stationId: 'FS-01',
+    complaintText: 'Delayed response time during last incident near Mirpur-10.',
+    status: 'Pending',
+  },
+  {
+    complaintId: 'CMP-4002',
+    complaintDate: '2026-08-24',
+    stationId: 'FS-04',
+    complaintText: 'Firefighting team was very professional and quick.',
+    status: 'Pending',
+  },
+]
+
+// mirrors `complaint` + `org_feedback`
+const initialOrgComplaints = [
+  {
+    complaintId: 'CMP-5001',
+    complaintDate: '2026-08-18',
+    stationId: 'FS-02',
+    trainingId: 'TRN-01',
+    trainingType: 'new trainee',
+    complaintText: 'Training schedule conflicted with duty shifts.',
+    status: 'Pending',
+  },
+]
+
+// mirrors `request` + `citizen` + `training` + `new_trainee`
+const initialTrainingRequests = [
+  {
+    requestId: 'REQ-T1',
+    citizenName: 'Abdul Karim',
+    trainingId: 'TRN-01',
+    trainingName: 'Basic Firefighting Orientation',
+    yearOfExperience: 0,
+    degree: 'HSC',
+    status: 'pending',
+  },
+  {
+    requestId: 'REQ-T2',
+    citizenName: 'Nusrat Jahan',
+    trainingId: 'TRN-02',
+    trainingName: 'Advanced Rescue Techniques',
+    yearOfExperience: 2,
+    degree: 'BSc',
+    status: 'pending',
+  },
+]
+
+// mirrors `Fire_Safety_Inspection` + `assigner_as_insp`
+const initialInspectionRequests = [
+  {
+    requestId: 'REQ-I1',
+    inspectionId: 'INSP-01',
+    location: 'Bashundhara City Shopping Mall',
+    riskLevel: 'High',
+    inspectionType: 'Routine',
+    status: 'pending',
+  },
+  {
+    requestId: 'REQ-I2',
+    inspectionId: 'INSP-02',
+    location: 'Uttara Sector 7 Apartment Complex',
+    riskLevel: 'Medium',
+    inspectionType: 'Complaint-based',
+    status: 'pending',
+  },
+]
 
 function Icon({ name }) {
   const paths = {
@@ -80,18 +203,267 @@ function FormField({ label, required = false, wide = false, children }) {
   )
 }
 
+// ---- Shared view for review-based complaint lists (citizen / org) ----
+function ReviewableComplaintsView({ title, subtitle, complaints, onReview, renderExtra }) {
+  return (
+    <section className="ad-view">
+      <div className="ad-page-heading">
+        <div>
+          <span>Complaint history</span>
+          <h1>{title}</h1>
+          <p>{subtitle}</p>
+        </div>
+      </div>
+
+      <div className="ad-panel-list">
+        {complaints.length === 0 && <p className="ad-empty-note">No complaints in this category yet.</p>}
+        {complaints.map((c) => (
+          <article key={c.complaintId} className="ad-complaint-card">
+            <div className="ad-complaint-head">
+              <div>
+                <small>Complaint ID</small>
+                <strong>{c.complaintId}</strong>
+              </div>
+              <span className={`ad-badge ad-badge-${c.status.toLowerCase().replace(/\s+/g, '-')}`}>
+                {c.status}
+              </span>
+            </div>
+
+            <div className="ad-complaint-grid">
+              <div><small>Date</small><strong>{c.complaintDate}</strong></div>
+              <div><small>Station</small><strong>{FIRE_STATIONS[c.stationId] || c.stationId}</strong></div>
+              {renderExtra && renderExtra(c)}
+              <div className="ad-info-wide"><small>Details</small><strong>{c.complaintText}</strong></div>
+            </div>
+
+            <div className="ad-decision-row">
+              <button
+                type="button"
+                className="ad-review-btn"
+                disabled={c.status === 'Solved'}
+                onClick={() => onReview(c.complaintId)}
+              >
+                {c.status === 'Pending' ? 'Mark In Review' : c.status === 'On Review' ? 'Mark Solved' : 'Solved'}
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// ---- Shared view for accept/reject request lists (training / inspection) ----
+function DecisionRequestsView({ title, subtitle, requests, onDecision, fields }) {
+  return (
+    <section className="ad-view">
+      <div className="ad-page-heading">
+        <div>
+          <span>Requests</span>
+          <h1>{title}</h1>
+          <p>{subtitle}</p>
+        </div>
+      </div>
+
+      <div className="ad-panel-list">
+        {requests.length === 0 && <p className="ad-empty-note">No requests right now.</p>}
+        {requests.map((r) => (
+          <article key={r.requestId} className="ad-complaint-card">
+            <div className="ad-complaint-head">
+              <div>
+                <small>Request ID</small>
+                <strong>{r.requestId}</strong>
+              </div>
+              <span className={`ad-badge ad-badge-${r.status}`}>
+                {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
+              </span>
+            </div>
+
+            <div className="ad-complaint-grid">
+              {fields.map((f) => (
+                <div key={f.key}>
+                  <small>{f.label}</small>
+                  <strong>{r[f.key] ?? 'N/A'}</strong>
+                </div>
+              ))}
+            </div>
+
+            {r.status === 'pending' && (
+              <div className="ad-decision-row">
+                <button type="button" className="ad-accept-btn" onClick={() => onDecision(r.requestId, 'accepted')}>
+                  Accept
+                </button>
+                <button type="button" className="ad-reject-btn" onClick={() => onDecision(r.requestId, 'rejected')}>
+                  Reject
+                </button>
+              </div>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// ---- Emergency complaints view (per-complaint priority-station dispatch) ----
+// function EmergencyComplaintsView({ complaints, onRequest }) {
+//   return (
+//     <section className="ad-view">
+//       <div className="ad-page-heading">
+//         <div>
+//           <span>Complaint history</span>
+//           <h1>Emergency Complaints</h1>
+//           <p>Live emergency reports with priority station dispatch requests.</p>
+//         </div>
+//       </div>
+
+//       <div className="ad-panel-list">
+//         {complaints.length === 0 && <p className="ad-empty-note">No emergency reports right now.</p>}
+//         {complaints.map((c) => {
+//           const stationIds = Object.keys(c.requests)
+//           return (
+//             <article key={c.complaintId} className="ad-complaint-card">
+//               <div className="ad-complaint-head">
+//                 <div>
+//                   <small>Complaint ID</small>
+//                   <strong>{c.complaintId}</strong>
+//                 </div>
+//                 <span className={`ad-badge ad-badge-${(c.incidentStatus || 'pending').toLowerCase().replace(/\s+/g, '-')}`}>
+//                   {c.incidentStatus}
+//                 </span>
+//               </div>
+
+//               <div className="ad-complaint-grid">
+//                 <div><small>Incident Type</small><strong>{c.incidentType}</strong></div>
+//                 {c.incidentType === 'Fire' && (
+//                   <div><small>Fire Size</small><strong>{c.fireSize || 'N/A'}</strong></div>
+//                 )}
+//                 <div><small>Building Type</small><strong>{c.buildingType || 'N/A'}</strong></div>
+//                 <div><small>Trapped Persons</small><strong>{c.trappedPersonCount}</strong></div>
+//                 <div><small>Area</small><strong>{c.area}</strong></div>
+//                 <div><small>Report Time</small><strong>{c.reportTime}</strong></div>
+//                 <div className="ad-info-wide"><small>Detailed Location</small><strong>{c.detailedLocation}</strong></div>
+//               </div>
+
+//               <div className="ad-station-list">
+//                 <small className="ad-station-list-label">Priority stations</small>
+//                 {stationIds.map((sid, idx) => (
+//                   <div key={sid} className="ad-station-row">
+//                     <span className="ad-station-priority">P{idx + 1}</span>
+//                     <span className="ad-station-name">{FIRE_STATIONS[sid] || sid}</span>
+//                     {c.requests[sid] === 'not_requested' ? (
+//                       <button type="button" className="ad-request-btn" onClick={() => onRequest(c.complaintId, sid)}>
+//                         Request
+//                       </button>
+//                     ) : (
+//                       <span className={`ad-badge ad-badge-${c.requests[sid]}`}>
+//                         {c.requests[sid] === 'pending' ? 'Pending' : c.requests[sid] === 'accepted' ? 'Accepted' : 'Rejected'}
+//                       </span>
+//                     )}
+//                   </div>
+//                 ))}
+//               </div>
+//             </article>
+//           )
+//         })}
+//       </div>
+//     </section>
+//   )
+// }
+
+
+
+function EmergencyComplaintsView({ complaints, onRequest }) {
+  return (
+    <section className="ad-view">
+      <div className="ad-page-heading">
+        <div>
+          <span>Complaint history</span>
+          <h1>Emergency Complaints</h1>
+          <p>Live emergency reports with priority station dispatch requests.</p>
+        </div>
+      </div>
+
+      <div className="ad-panel-list">
+        {complaints.length === 0 && <p className="ad-empty-note">No emergency reports right now.</p>}
+        {complaints.map((c) => (
+          <article key={c.COMPLAINT_ID} className="ad-complaint-card">
+            <div className="ad-complaint-head">
+              <div>
+                <small>Complaint ID</small>
+                <strong>{c.COMPLAINT_ID}</strong>
+              </div>
+              <span className={`ad-badge ad-badge-${(c.INCIDENT_STATUS || 'pending').toLowerCase().replace(/\s+/g, '-')}`}>
+                {c.INCIDENT_STATUS}
+              </span>
+            </div>
+
+            <div className="ad-complaint-grid">
+              <div><small>Reported By</small><strong>{c.CITIZEN_NAME}</strong></div>
+              <div><small>Phone</small><strong>{c.PHONE_NO}</strong></div>
+              <div><small>Incident Type</small><strong>{c.INCIDENT_TYPE}</strong></div>
+              {c.INCIDENT_TYPE?.toLowerCase() === 'fire' && (
+                <div><small>Fire Size</small><strong>{c.FIRE_SIZE || 'N/A'}</strong></div>
+              )}
+              <div><small>Building Type</small><strong>{c.BUILDING_TYPE || 'N/A'}</strong></div>
+              <div><small>Trapped Persons</small><strong>{c.TRAPPED_PERSON_COUNT}</strong></div>
+              <div><small>Area</small><strong>{c.AREA}</strong></div>
+              <div className="ad-info-wide"><small>Detailed Location</small><strong>{c.DETAILED_LOCATION}</strong></div>
+            </div>
+
+            <div className="ad-station-list">
+              <small className="ad-station-list-label">Active stations available</small>
+              {c.STATIONS.length === 0 && (
+                <p className="ad-empty-note">No active stations available for this area right now.</p>
+              )}
+              {c.STATIONS.map((station, idx) => (
+                <div key={station.STATION_ID} className="ad-station-row">
+                  <span className="ad-station-priority">P{idx + 1}</span>
+                  <span className="ad-station-name">{station.STATION_NAME}</span>
+                  <button
+                    type="button"
+                    className="ad-request-btn"
+                    onClick={() => onRequest(c, station.STATION_ID)}
+                  >
+                    Dispatch
+                  </button>
+                </div>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
 export default function AssignerDashboard({
   assigner = defaultAssigner,
-  complaintHistory = [],
   onSubmitSummary,
   onLogout,
   onBackHome,
 }) {
   const [activeView, setActiveView] = useState('dashboard')
+  const [complaintsOpen, setComplaintsOpen] = useState(false)
+  const [requestsOpen, setRequestsOpen] = useState(false)
+
   const [summary, setSummary] = useState(createEmptySummary)
   const [submittedSummaries, setSubmittedSummaries] = useState([])
   const [successMessage, setSuccessMessage] = useState('')
   const [timelineError, setTimelineError] = useState('')
+
+  // const [emergencyComplaints, setEmergencyComplaints] = useState(initialEmergencyComplaints)
+  const [emergencyComplaints, setEmergencyComplaints] = useState([])
+
+useEffect(() => {
+  fetch('http://localhost:3000/api/assignment/pending')
+    .then((res) => res.json())
+    .then((data) => setEmergencyComplaints(data.pendingReports || []))
+    .catch((err) => console.error('Failed to load pending reports:', err))
+}, [])
+  const [citizenComplaints, setCitizenComplaints] = useState(initialCitizenComplaints)
+  const [orgComplaints, setOrgComplaints] = useState(initialOrgComplaints)
+  const [trainingRequests, setTrainingRequests] = useState(initialTrainingRequests)
+  const [inspectionRequests, setInspectionRequests] = useState(initialInspectionRequests)
 
   const showView = (view) => {
     setActiveView(view)
@@ -151,6 +523,96 @@ export default function AssignerDashboard({
     console.log('Logout requested')
   }
 
+  // ---- Emergency: assigner requests a priority station ----
+  // TODO: replace the setTimeout simulation below with a real POST to your
+  // Next.js API once the backend is connected, then update state from the response.
+  // const handleStationRequest = (complaintId, stationId) => {
+  //   setEmergencyComplaints((prev) =>
+  //     prev.map((c) => {
+  //       if (c.complaintId !== complaintId) return c
+  //       if (c.requests[stationId] !== 'not_requested') return c
+  //       return { ...c, requests: { ...c.requests, [stationId]: 'pending' } }
+  //     })
+  //   )
+
+  //   setTimeout(() => {
+  //     setEmergencyComplaints((prev) =>
+  //       prev.map((c) => {
+  //         if (c.complaintId !== complaintId) return c
+  //         if (c.requests[stationId] !== 'pending') return c
+  //         const outcome = Math.random() > 0.3 ? 'accepted' : 'rejected'
+  //         return { ...c, requests: { ...c.requests, [stationId]: outcome } }
+  //       })
+  //     )
+  //   }, 1800)
+  // }
+
+
+const handleStationRequest = async (report, stationId) => {
+  try {
+    const res = await fetch('http://localhost:3000/api/assignment/dispatch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        stationId,
+        citizenId: report.CITIZEN_ID,
+        complaintId: report.COMPLAINT_ID,
+        assignmentId: report.ASSIGNMENT_ID,
+      }),
+    })
+
+    if (!res.ok) throw new Error('Dispatch failed')
+
+    // setEmergencyComplaints((prev) =>
+    //   prev.filter((c) => c.COMPLAINT_ID !== report.COMPLAINT_ID)
+    // )
+
+
+setEmergencyComplaints((prev) =>
+  prev.map((c) =>
+    c.COMPLAINT_ID === report.COMPLAINT_ID
+      ? { ...c, INCIDENT_STATUS: 'Dispatched', STATIONS: [] }
+      : c
+  )
+)
+
+  } catch (err) {
+    console.error('Failed to dispatch station:', err)
+    alert('Something went wrong dispatching this station. Please try again.')
+  }
+}
+
+
+
+  // ---- Citizen / Org complaints: cycle Pending -> On Review -> Solved ----
+  const cycleReview = (setList, complaintId) => {
+    const order = ['Pending', 'On Review', 'Solved']
+    setList((prev) =>
+      prev.map((c) => {
+        if (c.complaintId !== complaintId) return c
+        const idx = order.indexOf(c.status)
+        const next = order[Math.min(idx + 1, order.length - 1)]
+        return { ...c, status: next }
+      })
+    )
+  }
+  const handleReviewCitizen = (id) => cycleReview(setCitizenComplaints, id)
+  const handleReviewOrg = (id) => cycleReview(setOrgComplaints, id)
+
+  // ---- Training / Inspection requests: accept/reject, then sort pending first ----
+  const handleDecision = (setList, requestId, decision) => {
+    setList((prev) => {
+      const updated = prev.map((r) => (r.requestId === requestId ? { ...r, status: decision } : r))
+      const rank = (status) => (status === 'pending' ? 0 : 1)
+      return [...updated].sort((a, b) => rank(a.status) - rank(b.status))
+    })
+  }
+  const handleTrainingDecision = (id, decision) => handleDecision(setTrainingRequests, id, decision)
+  const handleInspectionDecision = (id, decision) => handleDecision(setInspectionRequests, id, decision)
+
+  const complaintSubviews = ['emergency', 'citizen', 'org']
+  const requestSubviews = ['training', 'inspection']
+
   return (
     <div className="assigner-dashboard">
       <style>{dashboardStyles}</style>
@@ -195,14 +657,72 @@ export default function AssignerDashboard({
               <Icon name="grid" />
               <span>Dashboard</span>
             </button>
+
             <button
               type="button"
-              className={activeView === 'complaints' ? 'active' : ''}
-              onClick={() => showView('complaints')}
+              className="ad-dropdown-toggle"
+              onClick={() => setComplaintsOpen((o) => !o)}
+              aria-expanded={complaintsOpen}
             >
               <Icon name="history" />
               <span>Complaint History</span>
+              <span className="ad-chevron">{complaintsOpen ? '▲' : '▼'}</span>
             </button>
+            {complaintsOpen && (
+              <div className="ad-subnav">
+                <button
+                  type="button"
+                  className={activeView === 'emergency' ? 'active' : ''}
+                  onClick={() => showView('emergency')}
+                >
+                  Emergency Complain
+                </button>
+                <button
+                  type="button"
+                  className={activeView === 'citizen' ? 'active' : ''}
+                  onClick={() => showView('citizen')}
+                >
+                  Citizen Complain
+                </button>
+                <button
+                  type="button"
+                  className={activeView === 'org' ? 'active' : ''}
+                  onClick={() => showView('org')}
+                >
+                  Org Feedback
+                </button>
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="ad-dropdown-toggle"
+              onClick={() => setRequestsOpen((o) => !o)}
+              aria-expanded={requestsOpen}
+            >
+              <Icon name="briefcase" />
+              <span>Requests</span>
+              <span className="ad-chevron">{requestsOpen ? '▲' : '▼'}</span>
+            </button>
+            {requestsOpen && (
+              <div className="ad-subnav">
+                <button
+                  type="button"
+                  className={activeView === 'training' ? 'active' : ''}
+                  onClick={() => showView('training')}
+                >
+                  Training Request
+                </button>
+                <button
+                  type="button"
+                  className={activeView === 'inspection' ? 'active' : ''}
+                  onClick={() => showView('inspection')}
+                >
+                  Inspection Request
+                </button>
+              </div>
+            )}
+
             <button
               type="button"
               className={activeView === 'response' ? 'active' : ''}
@@ -284,45 +804,61 @@ export default function AssignerDashboard({
             </section>
           )}
 
-          {activeView === 'complaints' && (
-            <section className="ad-view" aria-labelledby="complaints-title">
-              <div className="ad-page-heading">
-                <div>
-                  <span>Record archive</span>
-                  <h1 id="complaints-title">Complaint History</h1>
-                  <p>Review complaints connected to your assignment profile.</p>
-                </div>
-                <div className="ad-count-badge">{complaintHistory.length} records</div>
-              </div>
+          {activeView === 'emergency' && (
+            <EmergencyComplaintsView complaints={emergencyComplaints} onRequest={handleStationRequest} />
+          )}
 
-              {complaintHistory.length === 0 ? (
-                <div className="ad-empty-state">
-                  <span><Icon name="history" /></span>
-                  <h2>No complaint history found</h2>
-                  <p>Complaints connected to this assigner will appear here.</p>
-                </div>
-              ) : (
-                <div className="ad-history-list">
-                  {complaintHistory.map((complaint, index) => (
-                    <article key={complaint.id || index}>
-                      <div>
-                        <small>Complaint ID</small>
-                        <strong>{complaint.id || 'N/A'}</strong>
-                      </div>
-                      <div>
-                        <small>Incident</small>
-                        <strong>{complaint.incidentId || 'N/A'}</strong>
-                      </div>
-                      <div>
-                        <small>Date</small>
-                        <strong>{complaint.date || 'N/A'}</strong>
-                      </div>
-                      <span className="ad-history-status">{complaint.status || 'Pending'}</span>
-                    </article>
-                  ))}
-                </div>
+          {activeView === 'citizen' && (
+            <ReviewableComplaintsView
+              title="Citizen Complaints"
+              subtitle="Feedback and complaints submitted directly by citizens."
+              complaints={citizenComplaints}
+              onReview={handleReviewCitizen}
+            />
+          )}
+
+          {activeView === 'org' && (
+            <ReviewableComplaintsView
+              title="Organization Feedback"
+              subtitle="Feedback related to trainings and organizational programs."
+              complaints={orgComplaints}
+              onReview={handleReviewOrg}
+              renderExtra={(c) => (
+                <>
+                  <div><small>Training ID</small><strong>{c.trainingId}</strong></div>
+                  <div><small>Training Type</small><strong>{c.trainingType}</strong></div>
+                </>
               )}
-            </section>
+            />
+          )}
+
+          {activeView === 'training' && (
+            <DecisionRequestsView
+              title="Training Requests"
+              subtitle="Citizen requests to join firefighting training programs."
+              requests={trainingRequests}
+              onDecision={handleTrainingDecision}
+              fields={[
+                { key: 'citizenName', label: 'Applicant' },
+                { key: 'trainingName', label: 'Training' },
+                { key: 'degree', label: 'Degree' },
+                { key: 'yearOfExperience', label: 'Experience (yrs)' },
+              ]}
+            />
+          )}
+
+          {activeView === 'inspection' && (
+            <DecisionRequestsView
+              title="Inspection Requests"
+              subtitle="Fire safety inspection requests awaiting assignment."
+              requests={inspectionRequests}
+              onDecision={handleInspectionDecision}
+              fields={[
+                { key: 'location', label: 'Location' },
+                { key: 'riskLevel', label: 'Risk Level' },
+                { key: 'inspectionType', label: 'Inspection Type' },
+              ]}
+            />
           )}
 
           {activeView === 'response' && (
@@ -581,7 +1117,6 @@ const dashboardStyles = `
     min-height: calc(100vh - 150px);
     margin: 28px auto;
     display: grid;
-    /* Keep the same red:black split as the registration/login pages. */
     grid-template-columns: 31.65% minmax(0, 1fr);
     overflow: hidden;
     background: #0d0f13;
@@ -616,12 +1151,18 @@ const dashboardStyles = `
 
   .ad-nav { margin-top: 32px; display: flex; flex-direction: column; gap: 8px; }
   .ad-nav-label { margin: 0 10px 5px; color: rgba(255,255,255,.42); font-size: 9px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
-  .ad-nav button, .ad-logout { width: 100%; padding: 12px 13px; display: flex; align-items: center; gap: 11px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: rgba(255,255,255,.76); cursor: pointer; font-size: 13px; font-weight: 650; text-align: left; transition: .18s ease; }
-  .ad-nav button:hover { background: rgba(255,255,255,.075); color: white; transform: translateX(2px); }
+  .ad-nav button, .ad-logout, .ad-dropdown-toggle { width: 100%; padding: 12px 13px; display: flex; align-items: center; gap: 11px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: rgba(255,255,255,.76); cursor: pointer; font-size: 13px; font-weight: 650; text-align: left; transition: .18s ease; }
+  .ad-nav button:hover, .ad-dropdown-toggle:hover { background: rgba(255,255,255,.075); color: white; transform: translateX(2px); }
   .ad-nav button.active { color: white; background: rgba(10,4,7,.2); border-color: rgba(255,255,255,.14); box-shadow: inset 3px 0 0 #ffc16f; }
   .ad-nav button.active svg { color: #ffc16f; }
-  .ad-nav button:nth-of-type(3) { align-items: flex-start; }
-  .ad-nav button:nth-of-type(3) span { line-height: 1.35; }
+  .ad-nav button:nth-of-type(4) { align-items: flex-start; }
+  .ad-nav button:nth-of-type(4) span { line-height: 1.35; }
+  .ad-dropdown-toggle span:last-child { margin-left: auto; font-size: 9px; color: rgba(255,255,255,.5); }
+
+  .ad-subnav { display: flex; flex-direction: column; gap: 4px; margin: 2px 0 6px 14px; padding-left: 10px; border-left: 2px solid rgba(255,255,255,.12); }
+  .ad-subnav button { padding: 9px 11px; border: 0; border-radius: 7px; background: transparent; color: rgba(255,255,255,.62); font-size: 12px; font-weight: 600; text-align: left; cursor: pointer; transition: .15s ease; }
+  .ad-subnav button:hover { background: rgba(255,255,255,.06); color: white; }
+  .ad-subnav button.active { color: white; background: rgba(255,255,255,.09); box-shadow: inset 2px 0 0 #ffc16f; }
 
   .ad-sidebar-status { margin-top: auto; margin-bottom: 14px; padding: 14px; display: grid; background: rgba(17,63,42,.13); border: 1px solid rgba(118,234,164,.15); border-radius: 10px; }
   .ad-sidebar-status span { display: flex; align-items: center; gap: 7px; color: #78eda9; font-size: 11px; font-weight: 700; }
@@ -634,7 +1175,7 @@ const dashboardStyles = `
   .ad-content { min-width: 0; padding: clamp(30px, 4vw, 62px); background: var(--ad-surface); }
   .ad-view { animation: adFade .23s ease; }
   @keyframes adFade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-  .ad-page-heading { padding-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; gap: 25px; border-bottom: 1px solid var(--ad-line); }
+  .ad-page-heading { padding-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; gap: 25px; border-bottom: 1px solid var(--ad-line); margin-bottom: 26px; }
   .ad-page-heading > div:first-child > span { color: var(--ad-red); font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
   .ad-page-heading h1 { margin: 7px 0 7px; color: white; font-size: clamp(30px, 4vw, 43px); line-height: 1.06; letter-spacing: -.045em; }
   .ad-page-heading p { margin: 0; color: var(--ad-muted); font-size: 14px; line-height: 1.55; }
@@ -681,17 +1222,42 @@ const dashboardStyles = `
   .ad-quick-action button:hover, .ad-primary-button:hover { background: var(--ad-red-dark); }
   .ad-quick-action button svg, .ad-primary-button svg { width: 15px; height: 15px; }
 
-  .ad-empty-state { min-height: 350px; padding: 45px 20px; display: grid; place-content: center; justify-items: center; text-align: center; }
-  .ad-empty-state > span { width: 72px; height: 72px; display: grid; place-items: center; color: var(--ad-red); background: rgba(217, 4, 41, .09); border: 1px solid rgba(217, 4, 41, .18); border-radius: 50%; }
-  .ad-empty-state > span svg { width: 30px; height: 30px; }
-  .ad-empty-state h2 { margin: 17px 0 7px; color: white; font-size: 20px; }
-  .ad-empty-state p { margin: 0; color: var(--ad-muted); font-size: 13px; }
-  .ad-history-list { margin-top: 27px; display: grid; gap: 11px; }
-  .ad-history-list article { padding: 16px; display: grid; grid-template-columns: repeat(3, 1fr) auto; align-items: center; gap: 14px; background: var(--ad-card); border: 1px solid var(--ad-line); border-radius: 10px; }
-  .ad-history-list article div { display: grid; }
-  .ad-history-list small { color: var(--ad-muted); font-size: 9px; text-transform: uppercase; letter-spacing: .07em; }
-  .ad-history-list strong { margin-top: 4px; color: #e2e8f0; font-size: 12px; }
-  .ad-history-status { padding: 6px 9px; color: #fbbf24; background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.2); border-radius: 999px; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+  .ad-empty-note { color: var(--ad-muted); font-size: 13px; padding: 20px; text-align: center; background: var(--ad-card); border: 1px dashed var(--ad-line); border-radius: 12px; }
+
+  .ad-panel-list { display: grid; gap: 16px; }
+  .ad-complaint-card { padding: 20px; background: var(--ad-card); border: 1px solid var(--ad-line); border-radius: 12px; }
+  .ad-complaint-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--ad-line); }
+  .ad-complaint-head small { display: block; color: var(--ad-muted); font-size: 9px; text-transform: uppercase; letter-spacing: .07em; }
+  .ad-complaint-head strong { color: #fff; font-size: 14px; }
+  .ad-complaint-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px 16px; margin-bottom: 14px; }
+  .ad-complaint-grid > div small { display: block; color: var(--ad-muted); font-size: 9px; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
+  .ad-complaint-grid > div strong { color: #e2e8f0; font-size: 13px; overflow-wrap: anywhere; }
+  .ad-complaint-grid .ad-info-wide { grid-column: 1 / -1; }
+
+  .ad-station-list { margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--ad-line); display: grid; gap: 8px; }
+  .ad-station-list-label { display: block; margin-bottom: 2px; color: var(--ad-muted); font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
+  .ad-station-row { display: flex; align-items: center; gap: 11px; padding: 9px 11px; background: var(--ad-input); border: 1px solid var(--ad-line); border-radius: 9px; }
+  .ad-station-priority { width: 24px; height: 24px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 6px; background: rgba(217, 4, 41, .14); color: #ff9aa3; font-size: 10px; font-weight: 800; }
+  .ad-station-name { flex: 1; color: #e2e8f0; font-size: 13px; font-weight: 600; }
+
+  .ad-request-btn, .ad-review-btn, .ad-accept-btn, .ad-reject-btn { border: 0; border-radius: 7px; padding: 8px 14px; font-size: 12px; font-weight: 700; cursor: pointer; transition: .15s ease; }
+  .ad-request-btn { background: var(--ad-red); color: #fff; }
+  .ad-request-btn:hover { background: var(--ad-red-dark); }
+  .ad-review-btn { background: rgba(255,193,111,.14); color: #ffc16f; border: 1px solid rgba(255,193,111,.28); }
+  .ad-review-btn:hover:not(:disabled) { background: rgba(255,193,111,.24); }
+  .ad-review-btn:disabled { opacity: .55; cursor: not-allowed; }
+  .ad-decision-row { display: flex; gap: 10px; margin-top: 4px; }
+  .ad-accept-btn { background: rgba(52,211,153,.15); color: #5eead4; border: 1px solid rgba(52,211,153,.3); }
+  .ad-accept-btn:hover { background: rgba(52,211,153,.26); }
+  .ad-reject-btn { background: rgba(217,4,41,.14); color: #ff9aa3; border: 1px solid rgba(217,4,41,.3); }
+  .ad-reject-btn:hover { background: rgba(217,4,41,.24); }
+
+  .ad-badge { padding: 5px 10px; border-radius: 999px; font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+  .ad-badge-pending, .ad-badge-reported { color: #ffc16f; background: rgba(255,193,111,.12); border: 1px solid rgba(255,193,111,.25); }
+  .ad-badge-accepted, .ad-badge-solved { color: #5eead4; background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.25); }
+  .ad-badge-rejected { color: #ff9aa3; background: rgba(217,4,41,.12); border: 1px solid rgba(217,4,41,.25); }
+  .ad-badge-on-review { color: #93c5fd; background: rgba(96,165,250,.12); border: 1px solid rgba(96,165,250,.25); }
+  .ad-badge-not_requested { color: var(--ad-muted); background: rgba(255,255,255,.05); border: 1px solid var(--ad-line); }
 
   .ad-form-title { margin-bottom: 30px; }
   .ad-form-mark { width: 58px; height: 58px; flex: 0 0 auto; display: grid; place-items: center; color: var(--ad-red); background: var(--ad-card); border: 1px solid var(--ad-line); border-radius: 50%; }
@@ -730,7 +1296,6 @@ const dashboardStyles = `
   .ad-footer { width: min(1480px, calc(100% - 32px)); margin: 0 auto; padding: 0 0 25px; display: flex; justify-content: space-between; color: var(--ad-muted); font-size: 11px; }
 
   @media (max-width: 1120px) {
-    /* Do not shrink the red side to a fixed 340px at browser zoom. */
     .ad-shell { grid-template-columns: 31.65% minmax(0, 1fr); }
     .ad-content { padding: 32px 26px; }
     .ad-three-columns { grid-template-columns: 1fr; }
@@ -742,19 +1307,16 @@ const dashboardStyles = `
     .ad-shell { width: min(100% - 20px, 1480px); margin: 18px auto; grid-template-columns: 1fr; }
     .ad-sidebar { min-height: auto; padding: 18px; border-right: 0; border-bottom: 1px solid var(--ad-line); }
     .ad-profile, .ad-sidebar-status { display: none; }
-    .ad-nav { margin-top: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .ad-nav { margin-top: 0; display: grid; grid-template-columns: 1fr; gap: 7px; }
     .ad-nav-label { display: none; }
-    .ad-nav button { min-height: 66px; padding: 9px 7px; flex-direction: column; justify-content: center; gap: 5px; text-align: center; font-size: 10px; }
-    .ad-nav button:nth-of-type(3) { align-items: center; }
-    .ad-nav button.active { box-shadow: inset 0 3px 0 var(--ad-red); }
+    .ad-nav button, .ad-dropdown-toggle { min-height: 50px; padding: 9px 12px; justify-content: flex-start; gap: 10px; font-size: 12px; }
+    .ad-nav button.active { box-shadow: inset 3px 0 0 var(--ad-red); }
     .ad-logout { margin-top: 11px; justify-content: center; }
     .ad-content { padding: 27px 18px; }
     .ad-info-grid, .ad-form-grid { grid-template-columns: 1fr; }
     .ad-info-wide, .ad-field-wide { grid-column: auto; }
     .ad-quick-action { align-items: stretch; flex-direction: column; }
     .ad-quick-action button { width: 100%; }
-    .ad-history-list article { grid-template-columns: 1fr 1fr; }
-    .ad-history-status { justify-self: start; }
   }
 
   @media (max-width: 520px) {

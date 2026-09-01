@@ -1,13 +1,5 @@
-import oracledb from 'oracledb';
-oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
 
-oracledb.initOracleClient({ libDir: 'C:\\Users\\USER\\Desktop\\oracle\\instantclient\\instantclient_23_26' });
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-};
+import { getConnection, corsHeaders } from '../../../lib/db.js';
 
 export async function OPTIONS() {
   return new Response(null, { status: 204, headers: corsHeaders });
@@ -30,13 +22,8 @@ export async function POST(request) {
 
   let conn;
   try {
-    conn = await oracledb.getConnection({
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      connectString: process.env.DB_CONNECT_STRING,
-    });
+    conn = await getConnection();
 
-    // 1. Find or create citizen
     const existing = await conn.execute(
       `SELECT citizen_id FROM citizen WHERE phone_no = :phone`,
       { phone }
@@ -54,7 +41,6 @@ export async function POST(request) {
       );
     }
 
-    // 2. Create complaint
     const complaintId = generateId('CMP');
     await conn.execute(
       `INSERT INTO complaint (complaint_id, complaint_date, status)
@@ -62,7 +48,6 @@ export async function POST(request) {
       { complaintId }
     );
 
-    // 3. Create emergency (linked to complaint)
     await conn.execute(
       `INSERT INTO emergency
          (complaint_id, report_time, incident_type, fire_size, building_type, trapped_person_count, area, detailed_location, incident_status)
@@ -79,7 +64,6 @@ export async function POST(request) {
       }
     );
 
-    // 4. Create assignment (mostly uses defaults)
     const assignmentId = generateId('ASG');
     await conn.execute(
       `INSERT INTO assignment (assignment_id, request_time)
@@ -87,7 +71,6 @@ export async function POST(request) {
       { assignmentId }
     );
 
-    // 5. Link them all together
     await conn.execute(
       `INSERT INTO gives (citizen_id, complaint_id, assignment_id)
        VALUES (:citizenId, :complaintId, :assignmentId)`,
