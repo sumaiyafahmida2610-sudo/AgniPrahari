@@ -10,19 +10,26 @@ export async function GET() {
   try {
     conn = await getConnection();
 
+    // const pendingResult = await conn.execute(
+    //   `SELECT c.complaint_id, c.complaint_date, em.incident_type, em.fire_size,
+    //           em.building_type, em.trapped_person_count, em.incident_status,
+    //           em.area, em.detailed_location,
+    //           ci.full_name AS citizen_name, ci.phone_no,
+    //           g.citizen_id, g.assignment_id
+    //    FROM complaint c
+    //    JOIN emergency em ON em.complaint_id = c.complaint_id
+    //    JOIN gives g ON g.complaint_id = c.complaint_id
+    //    JOIN citizen ci ON ci.citizen_id = g.citizen_id
+    //    WHERE c.status = 'Pending'
+    //    ORDER BY c.complaint_date`
+    // );
+
+
     const pendingResult = await conn.execute(
-      `SELECT c.complaint_id, c.complaint_date, em.incident_type, em.fire_size,
-              em.building_type, em.trapped_person_count, em.incident_status,
-              em.area, em.detailed_location,
-              ci.full_name AS citizen_name, ci.phone_no,
-              g.citizen_id, g.assignment_id
-       FROM complaint c
-       JOIN emergency em ON em.complaint_id = c.complaint_id
-       JOIN gives g ON g.complaint_id = c.complaint_id
-       JOIN citizen ci ON ci.citizen_id = g.citizen_id
-       WHERE c.status = 'Pending'
-       ORDER BY c.complaint_date`
-    );
+  `SELECT * FROM v  cd _emergency_full_details
+   WHERE status = 'Pending'
+   ORDER BY complaint_date`
+);
 
     const pendingReports = pendingResult.rows;
 

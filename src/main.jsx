@@ -15,6 +15,33 @@ import Login from  './Login.jsx'
 import { useNavigate } from 'react-router-dom'
 import FireFighterDashboard from './FireFigherDashboard.jsx'
 
+import GeneralComplaint from './GeneralComplaint.jsx'
+import EmergencyInfo from './EmergencyInfo.jsx'
+
+
+
+
+function AssignerDashboardWrapper() {
+  const navigate = useNavigate()
+  return <AssignerDashboard onBackHome={() => navigate('/')} />
+}
+function EmergencyInfoWrapper() {
+  const navigate = useNavigate()
+  return <EmergencyInfo onBackHome={() => navigate('/')} />
+}
+
+function GeneralComplaintWrapper() {
+  const navigate = useNavigate()
+
+  return (
+    <GeneralComplaint
+      title="Complaint"
+      idLabel="Citizen ID"
+      onBackHome={() => navigate('/')}
+    />
+  )
+}
+
 
 function FirefighterLoginWrapper() {
   const navigate = useNavigate()
@@ -85,6 +112,10 @@ createRoot(document.getElementById('root')).render(
         <Route path="/login/citizen" element={<LoginWrapper role="citizen" />} />
         <Route path="/login/trainee" element={<LoginWrapper role="trainee" />} />
         <Route path="/citizen_profile" element={<CitizenProfileWrapper />} />
+        <Route 
+  path="/complaint" 
+  element={<GeneralComplaintWrapper />} 
+/>
 
         {/* <Route path="/training_request" element={<TrainingRequest />} /> */}
        
@@ -96,8 +127,9 @@ createRoot(document.getElementById('root')).render(
          <Route path="/login/firefighter" element={<FirefighterLoginWrapper />} />
          <Route path="/firefighter_dashboard" element={<FireFighterDashboardWrapper />} />
           {/* <Route path="/login/firefighter" element={<Login />} /> */}
-<Route path="/assigner_dashboard" element={<AssignerDashboard />} />
+<Route path="/assigner_dashboard" element={<AssignerDashboardWrapper />} />
          <Route path="/trainee_profile" element={<TraineeProfileWrapper />} /> 
+         <Route path="/emergency_info" element={<EmergencyInfoWrapper />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

@@ -408,7 +408,9 @@ export default function App() {
             )}
           </div>
 
-          <a href="tel:999" style={styles.callBtn}>☎ Emergency: 999</a>
+          {/* <a href="tel:999" style={styles.callBtn}>☎ Emergency: 999</a> */}
+
+          <Link to="/emergency_info" style={styles.callBtn}>☎ Emergency Info</Link>
         </div>
       </header>
 

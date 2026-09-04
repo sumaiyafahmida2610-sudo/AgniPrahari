@@ -1,4 +1,6 @@
+//import { useState, useEffect } from "react";
 import { useState, useEffect } from "react";
+import GeneralComplaint from "./GeneralComplaint.jsx";
 
 const STATIONS = [
   "Mirpur Central",
@@ -220,49 +222,15 @@ export default function Profile({ onBackHome, onLogout, initialSection = "profil
             </div>
           )}
 
+       
+
           {section === "complain" && (
-            <div style={{ ...styles.card, ...styles.wideCard }}>
-              <h2 style={styles.sectionTitle}>Give Complain</h2>
-              <p style={styles.subLabel}>
-                Describe your issue and select the relevant station.
-              </p>
-
-              {error && <div style={styles.errorBox}>{error}</div>}
-              {success && <div style={styles.successBox}>{success}</div>}
-
-              <form onSubmit={submitComplaint} style={styles.form}>
-                <div style={styles.field}>
-                  <label style={styles.label}>Station Name</label>
-                  <select
-                    style={styles.input}
-                    value={station}
-                    onChange={(e) => setStation(e.target.value)}
-                  >
-                    {STATIONS.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div style={styles.field}>
-                  <label style={styles.label}>Complaint Details</label>
-                  <textarea
-                    style={{ ...styles.input, ...styles.textarea }}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Describe your complaint in detail..."
-                    rows={12}
-                  />
-                </div>
-
-                <button type="submit" style={styles.primaryBtn}>
-                  Submit Complaint
-                </button>
-              </form>
-            </div>
-          )}
+  <GeneralComplaint
+    title="Complaint"
+    idLabel="Citizen ID"
+    onBackHome={onBackHome}
+  />
+)}
 
           {section === "history" && (
             <div style={{ ...styles.card, ...styles.wideCard }}>
